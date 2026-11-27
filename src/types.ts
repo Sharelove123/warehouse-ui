@@ -73,11 +73,26 @@ export interface MovementLog {
   created_at: string;
 }
 
+export interface MovementsPagination {
+  page: number;
+  page_size: number;
+  total_count: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface MovementsResponse {
+  results: MovementLog[];
+  pagination: MovementsPagination;
+}
+
 export interface AuditorDashboardResponse {
   summary: WarehouseSummary & { utilization_pct: number };
   history_7d: OccupancySnapshot[];
   active_pallets: Pallet[];
   recent_movements: MovementLog[];
+  movements_pagination: MovementsPagination;
 }
 
 export interface LoginResponse {

@@ -71,6 +71,13 @@ test.describe('Warehouse Management System E2E', () => {
     await expect(page.getByTestId('dash-occupied')).toBeVisible();
     await expect(page.getByTestId('dash-free')).toBeVisible();
     await expect(page.getByTestId('occupancy-chart').locator('svg').first()).toBeVisible();
+    await expect(page.getByTestId('movements-page-info')).toContainText('Page 1 of');
+
+    // Verify transfer activity action filter and search
+    await page.getByLabel('Filter transfer action').selectOption('LOAD');
+    await page.getByLabel('Search transfer activity').fill('PLT-1001');
+    await expect(page.locator('[data-testid^="movement-row-"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid^="movement-row-"]').first()).toContainText('PLT-1001');
   });
 
   test('Technician load, validation, 5s multi-session sync, and unload', async ({

@@ -44,4 +44,4 @@ The Auditor Dashboard's **7-Day Occupancy & Free Capacity** chart plots daily co
 
 * **Polling vs. WebSockets:** Chose 3-second HTTP polling over Django Channels/WebSockets to avoid requiring Redis/ASGI workers on free-tier infrastructure while easily satisfying the 5-second sync window.
 * **JWT in `localStorage`:** Chosen for clean cross-origin deployment between a static frontend host and container API host; mitigated with 8-hour access tokens and explicit logout/user-deactivation checks on `/api/auth/me/` and permissions.
-* **Deferred Work:** Pagination on movement logs (currently displays the latest 15 events), CSV export on the auditor dashboard, and simulated shuttle movement/battery drain transitions.
+* **Deferred Work:** CSV export on the auditor dashboard and simulated shuttle movement/battery drain transitions.

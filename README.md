@@ -85,9 +85,9 @@ Playwright uses Chromium, does not launch a competing `webServer`, and writes a 
 
 ### Recorded Verification Results
 
-* **Backend (`python manage.py test -v 2`):** `6 passed` (health endpoint, 25-cell grid + `A1` transfer point, load/unload + validation, RBAC `403` enforcement, admin user CRUD + password reset, `seed_demo` idempotency).
+* **Backend (`python manage.py test -v 2`):** `7 passed` (health endpoint, 25-cell grid + `A1` transfer point, load/unload + validation, RBAC `403` enforcement, admin user CRUD + password reset, `seed_demo` idempotency, paginated/filtered movement logs).
 * **Frontend build (`npm run build`):** `tsc -b && vite build` passed with zero errors.
-* **Playwright E2E (`npm test` on Chromium against local SQLite + Django + Vite):** `4 passed (11.6s)`:
+* **Playwright E2E (`npm test` on Chromium against local SQLite + Django + Vite):** `4 passed (11.4s)`:
   1. Auditor inspects 5×5 map (`A1` transfer + 24 cells), shuttle status (`SHUTTLE-01`), and 7-day dashboard (read-only).
   2. Technician loads pallet, triggers duplicate-pallet validation error, verifies `<5s` multi-session sync in an Auditor session, and unloads pallet.
   3. Technician RBAC restrictions verified on Auditor Dashboard and User Admin routes.
@@ -96,5 +96,5 @@ Playwright uses Chromium, does not launch a competing `webServer`, and writes a 
 ## Known Limitations
 
 * Multi-session map synchronization uses 3-second HTTP polling rather than WebSockets.
-* Auditor movement history displays the most recent 15 events without pagination.
+* Auditor movement history supports server-side pagination (10 per page) and filtering by action/search, without CSV export.
 * Hosted free-tier infrastructure may experience cold starts when waking from inactivity: the backend on Render free tier sleeps after 15 minutes of inactivity (~50–60s cold start; `/login` sends a background `GET /health/` ping to start waking it while credentials are entered) and the PostgreSQL database on Neon free tier auto-wakes in ~1–2s.

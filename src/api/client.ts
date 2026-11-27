@@ -1,6 +1,7 @@
 import type {
   AuditorDashboardResponse,
   LoginResponse,
+  MovementsResponse,
   ShuttleStatus,
   User,
   UserRole,
@@ -267,6 +268,23 @@ export function fetchShuttleStatus(): Promise<ShuttleStatus> {
 
 export function fetchAuditorDashboard(): Promise<AuditorDashboardResponse> {
   return apiRequest<AuditorDashboardResponse>('/api/auditor/dashboard/');
+}
+
+export function fetchAuditorMovements(params: {
+  page?: number;
+  pageSize?: number;
+  action?: 'ALL' | 'LOAD' | 'UNLOAD';
+  q?: string;
+} = {}): Promise<MovementsResponse> {
+  const searchParams = new URLSearchParams();
+  if (params.page) searchParams.set('page', String(params.page));
+  if (params.pageSize) searchParams.set('page_size', String(params.pageSize));
+  if (params.action && params.action !== 'ALL') searchParams.set('action', params.action);
+  if (params.q?.trim()) searchParams.set('q', params.q.trim());
+  const query = searchParams.toString();
+  return apiRequest<MovementsResponse>(
+    query ? `/api/auditor/movements/?${query}` : '/api/auditor/movements/'
+  );
 }
 
 export function fetchAdminUsers(): Promise<User[]> {
