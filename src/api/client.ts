@@ -163,15 +163,52 @@ async function apiRequest<T>(
   return payload as T;
 }
 
+export async function checkApiHealth(signal?: AbortSignal): Promise<boolean> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 75_000);
+  const onExternalAbort = () => controller.abort();
+  signal?.addEventListener('abort', onExternalAbort, { once: true });
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/health/`, {
+      method: 'GET',
+      signal: controller.signal,
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    window.clearTimeout(timeoutId);
+    signal?.removeEventListener('abort', onExternalAbort);
+  }
+}
+
 export async function loginRequest(
   username: string,
   password: string
 ): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
-  });
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 75_000);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/auth/login/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      throw new ApiError(
+        'Login timed out waiting for the API server. Please try again in a moment.',
+        408
+      );
+    }
+    throw new ApiError('Unable to reach the warehouse API server.', 0);
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 
   let payload: unknown = null;
   try {

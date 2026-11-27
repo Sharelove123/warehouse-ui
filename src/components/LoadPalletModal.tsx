@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { PackagePlus, X } from 'lucide-react';
 import { loadPallet } from '../api/client';
 import type { StorageLocation } from '../types';
@@ -25,9 +25,18 @@ export function LoadPalletModal({
   const [destination, setDestination] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const wasOpenRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) {
+      wasOpenRef.current = false;
+      return;
+    }
+
+    const justOpened = !wasOpenRef.current;
+    wasOpenRef.current = true;
+
+    if (justOpened) {
       setError(null);
       setPalletNumber('');
       setBarcode('');
@@ -38,12 +47,19 @@ export function LoadPalletModal({
         freeLocations.some((loc) => loc.code === initialDestination)
       ) {
         setDestination(initialDestination);
-      } else if (freeLocations.length > 0) {
-        setDestination(freeLocations[0].code);
       } else {
-        setDestination('');
+        setDestination(freeLocations[0]?.code ?? '');
       }
+      return;
     }
+
+    // Preserve typed inputs across 3-second background map polls; only adjust destination if taken.
+    setDestination((prev) => {
+      if (prev && freeLocations.some((loc) => loc.code === prev)) {
+        return prev;
+      }
+      return freeLocations[0]?.code ?? '';
+    });
   }, [isOpen, initialDestination, freeLocations]);
 
   if (!isOpen) return null;

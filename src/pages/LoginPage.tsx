@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, LogIn, User as UserIcon, Warehouse } from 'lucide-react';
+import { checkApiHealth } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export function LoginPage() {
@@ -11,6 +12,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [slowNotice, setSlowNotice] = useState(false);
+  const [wakeBanner, setWakeBanner] = useState<'idle' | 'waking' | 'ready' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -18,6 +20,32 @@ export function LoginPage() {
       navigate('/', { replace: true });
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (user) return;
+    const controller = new AbortController();
+    let showedWaking = false;
+
+    const wakeTimer = window.setTimeout(() => {
+      showedWaking = true;
+      setWakeBanner('waking');
+    }, 1500);
+
+    checkApiHealth(controller.signal).then((ok) => {
+      if (controller.signal.aborted) return;
+      window.clearTimeout(wakeTimer);
+      if (ok) {
+        setWakeBanner(showedWaking ? 'ready' : 'idle');
+      } else {
+        setWakeBanner('error');
+      }
+    });
+
+    return () => {
+      window.clearTimeout(wakeTimer);
+      controller.abort();
+    };
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,10 +93,30 @@ export function LoginPage() {
             </div>
           )}
 
+          {wakeBanner === 'waking' && !slowNotice && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-900">
+              Waking up the API server in the background... Free-tier cold start can take up to
+              ~60s. You can enter your credentials now.
+            </div>
+          )}
+
+          {wakeBanner === 'ready' && (
+            <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3.5 py-2.5 text-xs text-emerald-900">
+              API server is awake and ready to sign in.
+            </div>
+          )}
+
+          {wakeBanner === 'error' && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-900">
+              Could not confirm API readiness yet (hosted server may still be starting). You can
+              still try signing in.
+            </div>
+          )}
+
           {slowNotice && (
             <div className="rounded-lg bg-amber-50 border border-amber-200 px-3.5 py-2.5 text-xs text-amber-900">
               Connecting to the API server... If the hosted backend is waking from
-              idle sleep, this may take a few seconds.
+              idle sleep, this may take up to ~60 seconds.
             </div>
           )}
 
